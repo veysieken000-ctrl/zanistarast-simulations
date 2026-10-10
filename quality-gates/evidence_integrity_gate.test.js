@@ -1,0 +1,13 @@
+'use strict';
+const test=require('node:test');const assert=require('node:assert/strict');const crypto=require('node:crypto');
+const {PIPELINE,verifyRecord}=require('./evidence_integrity_gate');
+const record={pipeline:[...PIPELINE],input:'scenario',output:'observations'};
+const digest=crypto.createHash('sha256').update('scenario\nobservations').digest('hex');
+test('no record fails',()=>assert.equal(verifyRecord(null,digest).verified,false));
+test('no independent digest fails',()=>assert.equal(verifyRecord(record).verified,false));
+test('forged self claimed verified fails',()=>assert.equal(verifyRecord({...record,verified:true}).verified,false));
+test('invalid pipeline fails',()=>assert.equal(verifyRecord({...record,pipeline:['Hebun']},digest).verified,false));
+test('tampered output fails',()=>assert.equal(verifyRecord({...record,output:'altered'},digest).verified,false));
+test('missing observations fail',()=>assert.equal(verifyRecord({...record,output:''},digest).verified,false));
+test('matching independently supplied digest checks integrity',()=>assert.equal(verifyRecord(record,digest).verified,true));
+test('integrity is not scientific validation',()=>assert.match(verifyRecord(record,digest).reason,/scientific validity not established/));
