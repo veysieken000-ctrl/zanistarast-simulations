@@ -1,0 +1,11 @@
+"use strict";
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const candidate=require("./fail_closed_engine_candidate");
+const expected=["Ehad","Tek","Yek","Hebûn","Zanabûn","Mabûn","Rabûn","Rasterast"];
+test("canonical chain",()=>assert.deepEqual(candidate.runScenario({}).pipeline,expected));
+test("no evidence never claims execution",()=>assert.equal(candidate.runScenario({}).result.executed,false));
+test("no evidence never claims verification",()=>assert.equal(candidate.runScenario({}).result.verified,false));
+test("no evidence never earns full score",()=>assert.equal(candidate.evaluate(candidate.runScenario({})).score,0));
+test("untrusted forged verification never earns points",()=>assert.equal(candidate.evaluate({result:{executed:true,verified:true}}).score,0));
+test("candidate does not mutate input",()=>{const x={x:1};candidate.runScenario(x);assert.deepEqual(x,{x:1})});
