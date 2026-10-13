@@ -1,0 +1,25 @@
+name: Synthetic Policy Validation
+on:
+  push:
+    branches:
+      - 'research/scientific-validation-2026-10'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic regression suite
+        run: node --test tests/compare_policies.test.js
+      - name: Synthetic benchmark
+        run: node experiments/compare_policies.js > benchmark.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-benchmark
+          path: benchmark.json
