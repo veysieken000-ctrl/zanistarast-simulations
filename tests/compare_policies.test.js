@@ -1,0 +1,10 @@
+"use strict";
+const {test}=require("node:test");
+const assert=require("node:assert/strict");
+const {rng,gini,simulate,run}=require("../experiments/compare_policies");
+test("seed determinism",()=>{const a=rng(42),b=rng(42);for(let i=0;i<10000;i++){const v=a();assert.equal(v,b());assert.ok(v>=0&&v<1)}});
+test("Gini fixtures",()=>{assert.equal(gini([0,0,0]),0);assert.equal(gini([7,7,7]),0);assert.ok(Math.abs(gini([0,0,10])-2/3)<1e-12);assert.throws(()=>gini([]),RangeError);assert.throws(()=>gini([-1,2]),RangeError)});
+test("repeatability",()=>{for(const p of ["fixed","proportional","feedback"])assert.deepEqual(simulate(42,p),simulate(42,p))});
+test("input guards",()=>{assert.throws(()=>simulate(2,"invalid"),RangeError);assert.throws(()=>simulate(2,"fixed",0),RangeError);assert.throws(()=>simulate(2,"fixed",10,0),RangeError);assert.throws(()=>rng(-1),RangeError);assert.throws(()=>run(0),RangeError)});
+test("finite measured results",()=>{for(const p of ["fixed","proportional","feedback"]){const x=simulate(4,p);for(const k of ["meanUnmet","meanAllocationGini","meanUnmetRateGini","meanWasteRate"])assert.ok(Number.isFinite(x[k])&&x[k]>=0&&x[k]<=1,k);}});
+test("no fabricated verification; control baseline",()=>{const r=run(100);assert.equal(r.status,"SYNTHETIC_ONLY_NOT_EMPIRICAL_VALIDATION");assert.deepEqual(r,run(100));assert.ok(r.proportional.meanUnmet<=r.feedback.meanUnmet+1e-12);assert.ok(r.feedback.meanUnmet<=r.fixed.meanUnmet+1e-12);assert.ok(r.proportional.meanWasteRate<1e-12)});
